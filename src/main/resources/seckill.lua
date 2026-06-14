@@ -11,7 +11,7 @@ local voucherId = ARGV[1]
 -- 1.2 用户 ID
 local userId = ARGV[2]
 -- 1.3 订单 ID
---local orderId = ARGV[3]
+local orderId = ARGV[3]
 
 -- 2. 数据Key
 -- 2.1 库存key
