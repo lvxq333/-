@@ -34,3 +34,4 @@ end
 redis.call("incrby", stockKey, -1)
 -- 3.4 记录用户已经下单 sadd orderKey userId
 redis.call("sadd", orderKey, userId)
+return 0
