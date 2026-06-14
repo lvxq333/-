@@ -1,0 +1,16 @@
+package com.hmdp.utils;
+
+public interface ILock {
+
+    /**
+     * 尝试获取锁
+     * @param timeoutSec 锁的过期时间，单位秒
+     * @return 是否获取成功
+     */
+    boolean tryLock(Integer timeoutSec);
+
+    /**
+     * 释放锁
+     */
+    void unLock();
+}
