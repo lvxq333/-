@@ -20,6 +20,13 @@ spring:
         time-between-eviction-runs: 10s
   jackson:
     default-property-inclusion: non_null # JSON处理时忽略空字段
+
+  alioss:
+    endpoint: oss-cn-beijing.aliyuncs.com
+    access-key-id: REMOVED_OSS_ACCESS_KEY_ID
+    access-key-secret: REMOVED_OSS_ACCESS_KEY_SECRET
+    bucket-name: lhb-sky-take-out
+
 mybatis-plus:
   type-aliases-package: com.hmdp.entity # 别名扫描包
 logging:
