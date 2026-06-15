@@ -41,7 +41,7 @@ public class Blog implements Serializable {
      */
     private Long userId;
     /**
-     * 用户图标
+     * 用户图标，TableField表示当前字段不属于本数据库
      */
     @TableField(exist = false)
     private String icon;
