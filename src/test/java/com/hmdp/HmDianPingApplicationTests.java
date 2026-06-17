@@ -5,6 +5,7 @@ import com.hmdp.service.impl.ShopServiceImpl;
 import com.hmdp.utils.CacheClient;
 import com.hmdp.utils.RedisConstants;
 import com.hmdp.utils.RedisIdWork;
+import io.lettuce.core.Value;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -54,11 +55,16 @@ class HmDianPingApplicationTests {
         System.out.println("time = " + (end - begin));
     }
 
+    /**
+     * 向redis中写入商铺数据
+     */
     @Test
     void testSaveShop() {
-        Shop shop = shopService.getById(1L);
-        cacheClient.setWithLogicExpire(
-                RedisConstants.CACHE_SHOP_KEY + 1L, shop, 10L, TimeUnit.SECONDS);
+        for (int i = 1; i <= 14; i++) {
+            Shop shop = shopService.getById((long)i);
+            cacheClient.setWithLogicExpire(
+                    RedisConstants.CACHE_SHOP_KEY + (long)i, shop, 10L, TimeUnit.SECONDS);
+        }
     }
 
 }

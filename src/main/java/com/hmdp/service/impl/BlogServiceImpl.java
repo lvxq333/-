@@ -8,10 +8,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hmdp.dto.Result;
 import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.Blog;
+import com.hmdp.entity.Follow;
 import com.hmdp.entity.User;
 import com.hmdp.mapper.BlogMapper;
 import com.hmdp.service.IBlogService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hmdp.service.IFollowService;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.RedisConstants;
 import com.hmdp.utils.SystemConstants;
@@ -41,6 +43,9 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private IFollowService followService;
 
     /**
      * 查询博客详情
@@ -159,9 +164,58 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
                 .in("id", ids).last("ORDER BY FIELD(id," + idStr + ")").list()
                 .stream().map(user -> BeanUtil.copyProperties(user, UserDTO.class))
                 .collect(Collectors.toList());
-        
+
         // 4.返回用户
         return Result.ok(userDTOS);
+    }
+
+    /**
+     * 保存blog并推送给粉丝
+     *
+     * @param blog
+     * @return
+     */
+    @Override
+    public Result saveBlog(Blog blog) {
+        // 1.获取当前用户
+        Long userId = UserHolder.getUser().getId();
+        blog.setUserId(userId);
+        // 2.保存blog
+        boolean success = save(blog);
+        if (!success) {
+            return Result.fail("发布失败");
+        }
+        // 3.查询blog的作者的所有粉丝
+        // 3.1获取粉丝的id
+        List<Follow> follows = followService.query()
+                .eq("follow_user_id", userId).list();
+        if (follows == null || follows.isEmpty()) {
+            // 3.2没有粉丝，直接返回
+            return Result.ok(blog.getId());
+        }
+        // 4.推送blog给所有粉丝
+        for (Follow follow : follows) {
+            // 4.1获取粉丝id
+            Long followUserId = follow.getUserId();
+            // 4.2推送blog
+            String key = RedisConstants.FEED_KEY + followUserId;
+            stringRedisTemplate.opsForZSet()
+                    .add(key, blog.getId().toString(), System.currentTimeMillis());
+        }
+        // 5. 返回id
+        return Result.ok(blog.getId());
+    }
+
+    /**
+     * 查询用户关注的人的blog
+     *
+     * @param max
+     * @param offset
+     * @return
+     */
+    @Override
+    public Result queryBlogofFollow(Long max, Integer offset) {
+        return null;
     }
 
     // TODO 分页查询可以考虑用RedisIdWorker来生产自增id，确保不会再sortde_set中出现重复的id
