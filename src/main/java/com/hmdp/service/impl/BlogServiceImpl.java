@@ -222,6 +222,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         Long userId = UserHolder.getUser().getId();
         // 2.查询收件箱  ZREVRANGEBYSCORE key max 0 WITHSCORES LIMIT offset 5
         // key:用户收件箱id、0 最小分数、max 最大分数、offset 偏移量、5 获取数量
+        // 默认得到的顺序是时间戳倒序
         String key = RedisConstants.FEED_KEY + userId;
         Set<ZSetOperations.TypedTuple<String>> typedTuples = stringRedisTemplate.opsForZSet()
                 .reverseRangeByScoreWithScores(key, 0, max, offset, 5);
@@ -232,7 +233,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         // 2.2 不为空，解析数据
         List<Long> ids = new ArrayList<>(typedTuples.size());
         long minTime = 0;       // 最小时间戳，用于判断分页查询的边界和偏移量
-        int os = 1;             // 偏移量
+        int os = 1;             // 查询下一页时传人的offset偏移量
         for (ZSetOperations.TypedTuple<String> typedTuple : typedTuples) {
             // 2.3 获取blog的id，并添加到list中
             String id = typedTuple.getValue();
@@ -246,7 +247,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
                 os = 1;
             }
         }
-        os = minTime == max ? os : os + offset;
+        os = minTime == max ? os + offset : os;
         String idStr = StrUtil.join(",", ids);
         // 2.5 根据id获取blog
         List<Blog> blogs = query().in("id", ids)
