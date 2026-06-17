@@ -113,7 +113,7 @@ public class BlogController {
     }
 
     /**
-     * 查询用户关注的用户发布的blog
+     * 分页查询用户关注的人的blog
      *
      * @param max
      * @param offset

@@ -9,6 +9,7 @@ import com.hmdp.dto.Result;
 import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.Blog;
 import com.hmdp.entity.Follow;
+import com.hmdp.entity.ScrollResult;
 import com.hmdp.entity.User;
 import com.hmdp.mapper.BlogMapper;
 import com.hmdp.service.IBlogService;
@@ -19,9 +20,11 @@ import com.hmdp.utils.RedisConstants;
 import com.hmdp.utils.SystemConstants;
 import com.hmdp.utils.UserHolder;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -207,7 +210,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
     }
 
     /**
-     * 查询用户关注的人的blog
+     * 分页查询用户关注的人的blog
      *
      * @param max
      * @param offset
@@ -215,7 +218,52 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
      */
     @Override
     public Result queryBlogofFollow(Long max, Integer offset) {
-        return null;
+        // 1.获取当前用户
+        Long userId = UserHolder.getUser().getId();
+        // 2.查询收件箱  ZREVRANGEBYSCORE key max 0 WITHSCORES LIMIT offset 5
+        // key:用户收件箱id、0 最小分数、max 最大分数、offset 偏移量、5 获取数量
+        String key = RedisConstants.FEED_KEY + userId;
+        Set<ZSetOperations.TypedTuple<String>> typedTuples = stringRedisTemplate.opsForZSet()
+                .reverseRangeByScoreWithScores(key, 0, max, offset, 5);
+        // 2.1 收件箱是否为空
+        if (typedTuples == null || typedTuples.isEmpty()) {
+            return Result.ok();
+        }
+        // 2.2 不为空，解析数据
+        List<Long> ids = new ArrayList<>(typedTuples.size());
+        long minTime = 0;       // 最小时间戳，用于判断分页查询的边界和偏移量
+        int os = 1;             // 偏移量
+        for (ZSetOperations.TypedTuple<String> typedTuple : typedTuples) {
+            // 2.3 获取blog的id，并添加到list中
+            String id = typedTuple.getValue();
+            ids.add(Long.valueOf(id));
+            // 2.4 获取分数（时间戳）
+            long time = typedTuple.getScore().longValue();
+            if (time == minTime) {
+                os++;
+            } else {
+                minTime = time;
+                os = 1;
+            }
+        }
+        os = minTime == max ? os : os + offset;
+        String idStr = StrUtil.join(",", ids);
+        // 2.5 根据id获取blog
+        List<Blog> blogs = query().in("id", ids)
+                .last("ORDER BY FIELD(id," + idStr + ")").list();
+
+        blogs.forEach(blog -> {
+            // 2.6 查询blog有关的用户
+            queryBlogUser(blog);
+            // 2.7 查询blog是否被点赞
+            isBlogLiked(blog);
+        });
+        ScrollResult scrollResult = new ScrollResult();
+        scrollResult.setList(blogs);
+        scrollResult.setOffset(os);
+        scrollResult.setMinTime(minTime);
+        // 2.8 封装blog并返回
+        return Result.ok(scrollResult);
     }
 
     // TODO 分页查询可以考虑用RedisIdWorker来生产自增id，确保不会再sortde_set中出现重复的id

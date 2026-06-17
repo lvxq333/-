@@ -51,7 +51,7 @@ public interface IBlogService extends IService<Blog> {
     Result saveBlog(Blog blog);
 
     /**
-     * 查询用户关注的人的blog
+     * 分页查询用户关注的人的blog
      * @param max
      * @param offset
      * @return
