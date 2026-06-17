@@ -159,6 +159,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
                 .in("id", ids).last("ORDER BY FIELD(id," + idStr + ")").list()
                 .stream().map(user -> BeanUtil.copyProperties(user, UserDTO.class))
                 .collect(Collectors.toList());
+        
         // 4.返回用户
         return Result.ok(userDTOS);
     }
