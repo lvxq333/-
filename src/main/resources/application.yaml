@@ -32,3 +32,42 @@ mybatis-plus:
 logging:
   level:
     com.hmdp: debug
+
+kafka:
+  bootstrap-servers: localhost:9092
+  producer:
+    # 消息 key 的序列化方式
+    key-serializer: org.apache.kafka.common.serialization.StringSerializer
+    # 消息 value 的序列化方式（JSON）
+    value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    # 可靠性：所有副本确认后才认为发送成功
+    acks: all
+    # 发送失败重试次数
+    retries: 3
+    # 批量发送大小——攒够16KB（默认）批量发送
+    batch-size: 16384
+    # 缓冲区大小32MB（默认）
+    buffer-memory: 33554432
+    properties:
+      linger.ms: 10                    # ← 新增：最多等10ms凑批次
+      request.timeout.ms: 10000        # ← 新增：发送超时30秒
+  consumer:
+    # 消息 key 的反序列化方式
+    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    # 消息 value 的反序列化方式（JSON）
+    value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    # 消费者组 ID
+    group-id: seckill-order-group
+    # 信任的包（JSON 反序列化安全白名单）
+    properties:
+      spring.json.trusted.packages: com.hmdp.dto
+      session.timeout.ms: 30000        # ← 新增：30秒没心跳→触发重平衡
+      heartbeat.interval.ms: 3000      # ← 新增：每3秒发心跳
+      max.poll.interval.ms: 300000     # ← 新增：两次poll间隔最长5分钟
+    # 手动提交偏移量，防止消息丢失
+    enable-auto-commit: false
+    # 从最早未消费的消息开始（首次启动时）
+    auto-offset-reset: earliest
+  listener:
+    # 手动确认模式
+    ack-mode: manual
