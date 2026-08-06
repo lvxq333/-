@@ -95,7 +95,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         User user = query().eq("phone", phone).one();
         // 4.不存在，创建新用户
         if (user == null) {
-            createUserWithPhone(phone);
+            user = createUserWithPhone(phone);
         }
         // 5.保存用户信息到 redis中
         // 5.1.随机生成token，作为登录令牌
@@ -168,7 +168,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         String key = RedisConstants.USER_SIGN_KEY + userId + keySuffix;
         // 4.获取今天是本月的第几天
         int dayOfMonth = now.getDayOfMonth();
-        // 5.获取本月截止今天为止的所有的签到记录，返回的是一个十进制的数字 BITFIELD sign:5:202203 GET u14 0
+        // 5.获取本月截止今天为止的所有的签到记录，返回的是一个十进制的数字 BITFIELD sign:5:202203 GET udayOfMonth 0
+        // 其中udayOfMonth的dayOfMonth代表查询多少天的签到记录
         List<Long> result = stringRedisTemplate.opsForValue().bitField(
                 key,
                 BitFieldSubCommands.create()
