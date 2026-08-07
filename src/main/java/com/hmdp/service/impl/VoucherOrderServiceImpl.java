@@ -11,9 +11,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.utils.RedisIdWork;
 import com.hmdp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
-import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -40,8 +37,6 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     private ISeckillVoucherService seckillVoucherService;
     @Autowired
     private RedisIdWork redisIdWork;
-    @Resource
-    private RedissonClient redissonClient;
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -59,36 +54,6 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         ROLLBACK_SCRIPT = new DefaultRedisScript<>();
         ROLLBACK_SCRIPT.setLocation(new ClassPathResource("rollback.lua"));
         ROLLBACK_SCRIPT.setResultType(Long.class);
-    }
-
-    /**
-     * 异步处理优惠券订单
-     *
-     * @param voucherOrder 优惠券订单
-     */
-    private void handleVoucherOrder(VoucherOrder voucherOrder) {
-        // 1.获取用户id
-        Long userId = voucherOrder.getUserId();
-        // 2.获取优惠券id，构建锁key（userId + voucherId 粒度，不同券之间互不阻塞）
-        Long voucherId = voucherOrder.getVoucherId();
-        // 3.创建锁对象，锁粒度为用户+优惠券，防止同一用户对同一券并发写DB
-        RLock redisLock = redissonClient.getLock("lock:order:" + userId + ":" + voucherId);
-        // 4.获取锁
-        boolean isLock = redisLock.tryLock();
-        // 5.判断获取锁成功与否
-        if (!isLock) {
-            // 获取锁失败，说明同一用户正在处理该券的订单，跳过
-            log.info("不允许重复下单！userId={} voucherId={}", userId, voucherId);
-            return;
-        }
-        try {
-            // 通过 AOP 代理调用 @Transactional 方法，避免自调用导致事务失效
-            IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
-            proxy.creatVoucherOrder(voucherOrder);
-        } finally {
-            // 释放锁
-            redisLock.unlock();
-        }
     }
 
     /**
