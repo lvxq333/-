@@ -5,13 +5,13 @@
 ---
 
 -- 利用redis中的集合（set）在lua脚本中来实现秒杀资格判断
+-- 注意：订单落库已解耦至 Kafka，Lua 只负责原子性的资格校验与库存扣减
+
 -- 1.参数列表
 -- 1.1 优惠券 ID
 local voucherId = ARGV[1]
 -- 1.2 用户 ID
 local userId = ARGV[2]
--- 1.3 订单 ID
-local orderId = ARGV[3]
 
 -- 2. 数据Key
 -- 2.1 库存key
@@ -34,6 +34,5 @@ end
 redis.call("incrby", stockKey, -1)
 -- 3.4 记录用户已经下单 sadd orderKey userId
 redis.call("sadd", orderKey, userId)
--- 3.5 发送消息到stream消息队列中
-redis.call("xadd", "stream:orders", "*", "userId", userId, "voucherId", voucherId, "id", orderId)
+-- 3.5 订单落库由 Kafka 消费者异步处理，此处不再写入 Redis Stream
 return 0
