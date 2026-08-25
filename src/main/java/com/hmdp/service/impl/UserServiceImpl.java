@@ -36,7 +36,6 @@ import java.util.concurrent.TimeUnit;
  * 服务实现类
  * </p>
  *
- * @author 虎哥
  * @since 2021-12-22
  */
 @Service
@@ -111,7 +110,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         stringRedisTemplate.opsForHash().putAll(key, userMap);
         // 5.4.设置token有效期   30min
         stringRedisTemplate.expire(key, RedisConstants.LOGIN_USER_TTL, TimeUnit.MINUTES);
-
         // 6.返回token
         return Result.ok(token);
     }

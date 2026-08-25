@@ -6,8 +6,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/hmdp?useSSL=false&serverTimezone=UTC
-    username: root
-    password: 12345678
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:}
   redis:
     host: localhost
     port: 6379
@@ -22,10 +22,10 @@ spring:
     default-property-inclusion: non_null # JSON处理时忽略空字段
 
   alioss:
-    endpoint: oss-cn-beijing.aliyuncs.com
-    access-key-id: REMOVED_OSS_ACCESS_KEY_ID
-    access-key-secret: REMOVED_OSS_ACCESS_KEY_SECRET
-    bucket-name: lhb-sky-take-out
+    endpoint: ${ALIYUN_OSS_ENDPOINT:oss-cn-beijing.aliyuncs.com}
+    access-key-id: ${ALIYUN_OSS_ACCESS_KEY_ID:}
+    access-key-secret: ${ALIYUN_OSS_ACCESS_KEY_SECRET:}
+    bucket-name: ${ALIYUN_OSS_BUCKET_NAME:}
   kafka:
     bootstrap-servers: localhost:9092
     producer:
