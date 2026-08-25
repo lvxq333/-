@@ -1,0 +1,36 @@
+package com.trendspot.service;
+
+import com.trendspot.dto.Result;
+import com.trendspot.entity.Shop;
+import com.baomidou.mybatisplus.extension.service.IService;
+
+/**
+ * <p>
+ *  服务类
+ * </p>
+ *
+ * @since 2021-12-22
+ */
+public interface IShopService extends IService<Shop> {
+
+    /**
+     * 根据id查询商铺信息
+     * @param id
+     * @return
+     */
+    Result queryById(Long id);
+
+    /**
+     * 更新商铺信息
+     * @param shop
+     */
+    Result update(Shop shop);
+
+    /**
+     * 根据商铺类型分页查询商铺信息并按照店铺距离排序
+     * @param typeId
+     * @param current
+     * @return
+     */
+    Result queryShopByType(Integer typeId, Integer current, Double x, Double y);
+}

@@ -1,4 +1,4 @@
-# 黑马点评后端
+# 潮人探店后端
 
 一个基于 Spring Boot 的本地生活点评服务后端，围绕用户登录、商铺查询、达人探店、关注关系和优惠券秒杀等场景实现。项目使用 Redis 处理缓存、登录态和秒杀资格校验，并通过 Kafka 异步完成秒杀订单落库。
 
@@ -37,7 +37,7 @@
 1. 创建数据库并导入初始化脚本：
 
    ```bash
-   mysql -u root -p < src/main/resources/db/hmdp.sql
+   mysql -u root -p < src/main/resources/db/trendspot.sql
    ```
 
 2. 设置运行所需的环境变量：
@@ -45,6 +45,7 @@
    ```bash
    export MYSQL_USERNAME=root
    export MYSQL_PASSWORD='你的数据库密码'
+   export REDIS_PASSWORD='你的 Redis 密码（无密码时留空）'
 
    # 使用图片上传功能时再配置
    export ALIYUN_OSS_ENDPOINT='oss-cn-beijing.aliyuncs.com'
@@ -71,7 +72,7 @@
 ## 项目结构
 
 ```text
-src/main/java/com/hmdp
+src/main/java/com/trendspot
 ├── config       # Web、MyBatis、Redis、Kafka、OSS 配置
 ├── consumer     # Kafka 秒杀订单消费者
 ├── controller   # HTTP 接口
@@ -82,7 +83,7 @@ src/main/java/com/hmdp
 └── utils        # 缓存、锁、Token、ID 生成等工具
 
 src/main/resources
-├── db/hmdp.sql  # 数据库初始化脚本
+├── db/trendspot.sql  # 数据库初始化脚本
 ├── mapper       # MyBatis XML
 └── *.lua        # 秒杀、解锁与回滚脚本
 ```
